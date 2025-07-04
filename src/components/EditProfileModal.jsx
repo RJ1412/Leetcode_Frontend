@@ -8,7 +8,7 @@ export default function EditProfileModal({ name, email, onClose, onUpdated }) {
   const handleUpdate = async () => {
     try {
       setSaving(true);
-      await axios.put("https://logicodebackend-2.onrender.com/api/v1/users/update-profile", { name: newName }, { withCredentials: true });
+      await axios.put("http://localhost:8080/api/v1/users/update-profile", { name: newName }, { withCredentials: true });
       onUpdated();
       onClose();
     } catch (err) {

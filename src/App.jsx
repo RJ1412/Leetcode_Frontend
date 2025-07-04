@@ -12,7 +12,6 @@ import AdminRoute from "./components/AdminRoute";
 import AddProblem from "./page/AddProblem";
 import ProblemPage from "./page/ProblemPage";
 import ProfilePage from "./page/ProfilePage";
-import MyPlaylists from "./page/MyPlaylists";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -30,7 +29,7 @@ const App = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start ">
+    <div className="flex flex-col justify-start ">
       <Toaster />
       <Routes>
         <Route path="/" element={<Layout />}>
@@ -55,10 +54,6 @@ const App = () => {
           element= {<ProblemPage /> }
         />
 
-        <Route
-            path="/my-playlist"
-            element={authUser ? <MyPlaylists /> : <Navigate to="/" />}
-          />
 
         <Route
           path="/profile"

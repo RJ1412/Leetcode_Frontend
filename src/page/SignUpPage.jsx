@@ -1,3 +1,4 @@
+// SignUpPage.jsx (Enhanced Animated Landing Page)
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,8 +14,6 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 import { useAuthStore } from "../store/useAuthStore";
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
 import { motion } from "framer-motion";
 
 const SignUpSchema = z.object({
@@ -22,23 +21,6 @@ const SignUpSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().min(3, "Name must be at least 3 characters"),
 });
-
-const particlesOptions = {
-  background: { color: { value: "#0f172a" } },
-  fpsLimit: 60,
-  interactivity: {
-    events: { onHover: { enable: true, mode: "repulse" } },
-    modes: { repulse: { distance: 80, duration: 0.4 } },
-  },
-  particles: {
-    color: { value: "#ffffff" },
-    links: { enable: true, color: "#ffffff", distance: 120, opacity: 0.2, width: 1 },
-    move: { enable: true, speed: 1, direction: "none", outMode: "bounce" },
-    number: { value: 50 },
-    size: { value: { min: 1, max: 3 } },
-  },
-  detectRetina: true,
-};
 
 const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -60,49 +42,30 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="relative h-screen w-full bg-gradient-to-tr from-[#0f172a] to-[#1e293b] flex items-center justify-center overflow-hidden px-6">
-      <Particles id="tsparticles" init={loadFull} options={particlesOptions} className="absolute inset-0 z-0" />
+    <div className="relative min-h-screen bg-gradient-to-tr from-[#fdfbff] to-[#e0f7fa] flex items-center justify-center overflow-hidden font-inter">
+      {/* Background Glows */}
+      <div className="bg-glow bg-glow-1 animate-pulse delay-100"></div>
+      <div className="bg-glow bg-glow-2 animate-pulse delay-300"></div>
+      <div className="bg-glow bg-glow-3 animate-pulse delay-500"></div>
 
-      <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl z-10">
-        {/* Left Panel - Form */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full px-6 sm:px-10 lg:px-20 xl:px-32 z-10 py-12">
+        {/* Left Panel */}
         <motion.div
-          initial={{ opacity: 0, x: -100 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col justify-center items-center p-6 sm:p-10 w-full md:w-1/2 bg-[#0f172a]/80 backdrop-blur-md rounded-2xl shadow-lg"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 sm:p-10 border border-purple-100 flex flex-col justify-center"
         >
-          <div className="w-full max-w-md space-y-8">
-            {/* Branding */}
+          <div className="w-full max-w-md mx-auto space-y-8">
             <div className="text-center">
-              <motion.h1
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-3xl font-extrabold text-white"
+              <motion.div
+                whileHover={{ rotate: 5 }}
+                className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-white rounded-xl shadow-lg"
               >
-                LogiCode
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-sm text-white/60 font-light"
-              >
-                Practice. Learn. Grow.
-              </motion.p>
-            </div>
-
-            <div className="text-center mb-6">
-              <div className="flex flex-col items-center gap-2">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="w-12 h-12 rounded-xl bg-purple-700 flex items-center justify-center shadow-lg"
-                >
-                  <Code className="w-6 h-6 text-white" />
-                </motion.div>
-                <h1 className="text-2xl font-bold text-white mt-2">Create Your LogiCode Account</h1>
-                <p className="text-white/70">Join the coding community</p>
-              </div>
+                <Code className="w-6 h-6" />
+              </motion.div>
+              <h1 className="text-3xl font-bold mt-4 text-purple-700">Create Your LogiCode Account</h1>
+              <p className="text-gray-600 text-sm mt-1 italic">Join the coding community</p>
             </div>
 
             {/* Form */}
@@ -110,66 +73,66 @@ const SignUpPage = () => {
               {/* Name */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-white font-medium">Name</span>
+                  <span className="label-text text-gray-700 font-medium">Name</span>
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 h-5 w-5" />
+                  <User className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
                   <input
                     type="text"
                     {...register("name")}
                     placeholder="John Doe"
-                    className={`input input-bordered w-full pl-10 text-black ${errors.name ? "input-error" : ""}`}
+                    className={`input input-bordered w-full pl-10 ${errors.name ? "input-error" : ""}`}
                   />
                 </div>
-                {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name.message}</p>}
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
               </div>
 
               {/* Email */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-white font-medium">Email</span>
+                  <span className="label-text text-gray-700 font-medium">Email</span>
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 h-5 w-5" />
+                  <Mail className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
                   <input
                     type="email"
                     {...register("email")}
                     placeholder="you@example.com"
-                    className={`input input-bordered w-full pl-10 text-black ${errors.email ? "input-error" : ""}`}
+                    className={`input input-bordered w-full pl-10 ${errors.email ? "input-error" : ""}`}
                   />
                 </div>
-                {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>}
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
 
               {/* Password */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-white font-medium">Password</span>
+                  <span className="label-text text-gray-700 font-medium">Password</span>
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 h-5 w-5" />
+                  <Lock className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
                   <input
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
                     placeholder="••••••••"
-                    className={`input input-bordered w-full pl-10 text-black ${errors.password ? "input-error" : ""}`}
+                    className={`input input-bordered w-full pl-10 ${errors.password ? "input-error" : ""}`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40"
+                    className="absolute right-3 top-2.5 text-gray-400"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>}
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
               </div>
 
               {/* Button */}
               <motion.button
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.97 }}
                 type="submit"
-                className="btn bg-violet-600 hover:bg-violet-500 text-white w-full border-0 focus:outline-none rounded-lg shadow-lg hover:shadow-violet-400/40 transition-all"
+                className="btn bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:brightness-110 transition-all duration-300 w-full text-white shadow-md"
                 disabled={isSigninUp}
               >
                 {isSigninUp ? (
@@ -182,25 +145,25 @@ const SignUpPage = () => {
               </motion.button>
             </form>
 
-            {/* Redirect */}
-            <p className="text-white/70 text-center">
-              Already have an account?{" "}
-              <Link to="/login" className="link link-accent">
-                Sign in
-              </Link>
+            <p className="text-center text-sm text-gray-600 pt-4">
+              Already have an account? <Link to="/login" className="text-fuchsia-600 font-semibold hover:underline">Sign in</Link>
             </p>
           </div>
         </motion.div>
 
-        {/* Right Panel - Code Box */}
+        {/* Right Panel */}
         <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-col items-center justify-center space-y-6 w-full md:w-1/2 mt-10 md:mt-0"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          className="flex flex-col items-center justify-center p-8 sm:p-10 bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl border border-purple-100"
         >
-          <div className="w-full max-w-md bg-[#1e293b] p-6 rounded-xl shadow-lg animate-float">
-            <pre className="text-green-400 text-sm whitespace-pre-wrap">
+          <motion.div
+            className="w-full max-w-md p-6 bg-[#fdfbff] rounded-xl shadow-inner border border-purple-200"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity }}
+          >
+            <pre className="text-green-600 text-sm font-mono whitespace-pre-wrap">
 {`const solve = () => {
   let solved = [];
   for (let i = 0; i < 100; i++) {
@@ -209,11 +172,10 @@ const SignUpPage = () => {
   return solved;
 };`}
             </pre>
-          </div>
-          <h2 className="text-xl font-semibold text-center animate-pulse text-white">
-            Empower Your Logic, Join LogiCode 💡
-          </h2>
-          <p className="text-center text-white/70 max-w-xs">
+          </motion.div>
+
+          <h2 className="text-xl font-semibold text-purple-700 mt-6 animate-pulse">Empower Your Logic, Join LogiCode 💡</h2>
+          <p className="text-center text-gray-600 text-sm max-w-xs mt-2">
             Build, learn, and become a better developer every day.
           </p>
         </motion.div>

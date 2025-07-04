@@ -15,6 +15,8 @@
     "@monaco-editor/react": "^4.7.0",
     "@tailwindcss/vite": "^4.1.6",
     "axios": "^1.9.0",
+    "canvas-confetti": "^1.9.3",
+    "clsx": "^2.1.1",
     "daisyui": "^5.0.35",
     "framer-motion": "^12.15.0",
     "lucide": "^0.509.0",

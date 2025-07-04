@@ -1,4 +1,4 @@
-// LoginPage.jsx (Enhanced for LogiCode with Optional Animations)
+// LoginPage.jsx (Enhanced Animated Landing Page)
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ import { motion } from "framer-motion";
 
 const LoginSchema = z.object({
   email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be atleast of 6 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const LoginPage = () => {
@@ -44,39 +44,40 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-tr from-[#0f172a] to-[#1e293b] flex items-center justify-center overflow-hidden px-6">
-      {/* Floating glow background */}
-      <div className="bg-glow bg-glow-1"></div>
-      <div className="bg-glow bg-glow-2"></div>
+    <div className="relative min-h-screen bg-gradient-to-tr from-[#fdfbff] to-[#e0f7fa] flex items-center justify-center overflow-hidden font-inter">
+      {/* Background Glows */}
+      <div className="bg-glow bg-glow-1 animate-pulse delay-100"></div>
+      <div className="bg-glow bg-glow-2 animate-pulse delay-300"></div>
+      <div className="bg-glow bg-glow-3 animate-pulse delay-500"></div>
 
-      <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl space-y-10 md:space-y-0 md:space-x-10 z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full px-6 sm:px-10 lg:px-20 xl:px-32 z-10 py-12">
         {/* Left Panel */}
         <motion.div
-          initial={{ opacity: 0, x: -100 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col justify-center items-center p-6 sm:p-12 w-full md:w-1/2 bg-[#0f172a]/80 backdrop-blur-md rounded-2xl shadow-lg"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 sm:p-10 border border-purple-100 flex flex-col justify-center"
         >
-          <div className="w-full max-w-md space-y-8">
-            <div className="text-center mb-8">
-              <div className="flex flex-col items-center gap-2">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="w-12 h-12 rounded-xl bg-purple-700 flex items-center justify-center shadow-lg"
-                >
-                  <Code className="w-6 h-6 text-white" />
-                </motion.div>
-                <h1 className="text-3xl font-bold mt-2">Welcome to LogiCode</h1>
-                <p className="text-white/70 text-sm italic">Logic Meets Code. Elevate Your Skills.</p>
-              </div>
+          <div className="w-full max-w-md mx-auto space-y-8">
+            <div className="text-center">
+              <motion.div
+                whileHover={{ rotate: 5 }}
+                className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-white rounded-xl shadow-lg"
+              >
+                <Code className="w-6 h-6" />
+              </motion.div>
+              <h1 className="text-3xl font-bold mt-4 text-purple-700">Welcome to LogiCode</h1>
+              <p className="text-gray-600 text-sm mt-1 italic">Logic Meets Code. Elevate Your Skills.</p>
             </div>
 
-            {/* Admin/User Toggle */}
-            <div className="flex justify-center gap-4 mb-4">
+            {/* Role Toggle */}
+            <div className="flex justify-center gap-4">
               <button
                 type="button"
                 className={`btn btn-sm px-4 py-2 rounded-full border-2 transition-all duration-300 ${
-                  isAdmin ? "bg-purple-600 text-white" : "bg-transparent text-white/70 border-white/30"
+                  isAdmin
+                    ? "bg-purple-600 text-white"
+                    : "bg-transparent text-gray-500 border-gray-300"
                 }`}
                 onClick={() => setIsAdmin(true)}
               >
@@ -85,7 +86,9 @@ const LoginPage = () => {
               <button
                 type="button"
                 className={`btn btn-sm px-4 py-2 rounded-full border-2 transition-all duration-300 ${
-                  !isAdmin ? "bg-green-500 text-white" : "bg-transparent text-white/70 border-white/30"
+                  !isAdmin
+                    ? "bg-green-500 text-white"
+                    : "bg-transparent text-gray-500 border-gray-300"
                 }`}
                 onClick={() => setIsAdmin(false)}
               >
@@ -97,78 +100,56 @@ const LoginPage = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-white font-medium">Email</span>
+                  <span className="label-text text-gray-700 font-medium">Email</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-white/40" />
-                  </div>
+                  <Mail className="absolute left-3 top-3 text-gray-400" />
                   <input
                     type="email"
                     {...register("email")}
-                    className={`input input-bordered w-full pl-10 text-black ${
-                      errors.email ? "input-error" : ""
-                    }`}
+                    className={`input input-bordered w-full pl-10 ${errors.email ? "input-error" : ""}`}
                     placeholder="you@example.com"
                   />
                 </div>
-                {errors.email && (
-                  <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
-                )}
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-white font-medium">Password</span>
+                  <span className="label-text text-gray-700 font-medium">Password</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-white/40" />
-                  </div>
+                  <Lock className="absolute left-3 top-3 text-gray-400" />
                   <input
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
-                    className={`input input-bordered w-full pl-10 text-black ${
-                      errors.password ? "input-error" : ""
-                    }`}
+                    className={`input input-bordered w-full pl-10 ${errors.password ? "input-error" : ""}`}
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute right-3 top-2.5"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-white/40" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-white/40" />
-                    )}
+                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
                   </button>
                 </div>
-                {errors.password && (
-                  <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>
-                )}
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
               </div>
 
               <motion.button
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.97 }}
                 type="submit"
-                className="btn bg-violet-600 hover:bg-violet-500 transition-all duration-300 w-full rounded-lg shadow-lg hover:shadow-violet-400/50"
+                className="btn bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:brightness-110 transition-all duration-300 w-full text-white shadow-md"
                 disabled={isLoggingIn}
               >
-                {isLoggingIn ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" /> Logging in...
-                  </>
-                ) : (
-                  "Sign in"
-                )}
+                {isLoggingIn ? <><Loader2 className="h-5 w-5 animate-spin" /> Logging in...</> : "Sign in"}
               </motion.button>
             </form>
 
-            <div className="text-center">
-              <p className="text-white/70">
-                Don't have an account? <Link to="/signup" className="link link-accent">Sign up</Link>
+            <div className="text-center pt-4">
+              <p className="text-sm text-gray-600">
+                Don't have an account? <Link to="/signup" className="text-fuchsia-600 font-semibold hover:underline">Sign up</Link>
               </p>
             </div>
           </div>
@@ -176,37 +157,32 @@ const LoginPage = () => {
 
         {/* Right Panel */}
         <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-col items-center justify-center space-y-6 w-full md:w-1/2"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          className="flex flex-col items-center justify-center p-8 sm:p-10 bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl border border-purple-100"
         >
-          <div className="w-full max-w-md bg-[#1e293b] p-6 rounded-xl shadow-lg animate-float">
-            <pre className="text-green-400 text-sm whitespace-pre-wrap">
+          <motion.div
+            className="w-full max-w-md p-6 bg-[#fdfbff] rounded-xl shadow-inner border border-purple-200"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity }}
+          >
+            <pre className="text-green-600 text-sm font-mono whitespace-pre-wrap">
 {`function isValid(s) {
   const stack = [];
-  const map = {
-    '(': ')',
-    '{': '}',
-    '[': ']'
-  };
+  const map = { '(': ')', '{': '}', '[': ']' };
   for (let i = 0; i < s.length; i++) {
-    if (s[i] in map) {
-      stack.push(s[i]);
-    } else {
-      const last = stack.pop();
-      if (map[last] !== s[i]) return false;
-    }
+    if (s[i] in map) stack.push(s[i]);
+    else if (map[stack.pop()] !== s[i]) return false;
   }
   return stack.length === 0;
 }`}
             </pre>
-          </div>
-          <h2 className="text-xl font-semibold text-center animate-pulse">
-            Practice. Debug. Master.
-          </h2>
-          <p className="text-center text-white/70 max-w-xs text-sm">
-            LogiCode is your destination to sharpen problem-solving with logic-driven challenges and competitive programming.
+          </motion.div>
+
+          <h2 className="text-xl font-semibold text-purple-700 mt-6 animate-pulse">Practice. Debug. Master.</h2>
+          <p className="text-center text-gray-600 text-sm max-w-xs mt-2">
+            Sharpen your coding skills with logic-driven challenges, curated for learners and pros.
           </p>
         </motion.div>
       </div>

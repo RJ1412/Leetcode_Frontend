@@ -1,263 +1,306 @@
-// ProblemPage.jsx
 import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import {
-  Play, FileText, Lightbulb, Bookmark, Share2, Clock, ChevronRight,
-  Code2, Users, ThumbsUp, Home, Terminal,
+  Bookmark,
+  Share2,
+  Clock,
+  Users,
+  ThumbsUp,
+  Home,
+  Terminal,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useProblemStore } from "../store/useProblemStore";
 import { getLanguageId } from "../lib/lang";
 import { useExecutionStore } from "../store/useExecutionStore";
 import { useSubmissionStore } from "../store/useSubmissionStore";
-import Submission from "../components/Submission";
 import SubmissionsList from "../components/SubmissionList";
 import { usePlaylistStore } from "../store/usePlaylistStore";
 import { motion } from "framer-motion";
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 const ProblemPage = () => {
   const { id } = useParams();
   const { getProblemById, problem, isProblemLoading } = useProblemStore();
   const {
-    submissions, isLoading: isSubmissionsLoading,
-    getSubmissionForProblem, getSubmissionCountForProblem,
-    submissionCount, getSuccessRateForProblem, successRate,
+    getSubmissionForProblem,
+    submissions,
+    isLoading: isSubmissionsLoading,
+    submissionCount,
+    getSubmissionCountForProblem,
+    getSuccessRateForProblem,
+    successRate,
   } = useSubmissionStore();
-  const { executeCode, submission, isExecuting } = useExecutionStore();
-  const { playlists, getAllPlaylists } = usePlaylistStore();
+  const { executeCode, isExecuting, submission } = useExecutionStore();
+  const { getAllPlaylists } = usePlaylistStore();
 
   const [code, setCode] = useState("");
   const [activeTab, setActiveTab] = useState("description");
-  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [testcases, setTestCases] = useState([]);
+  const [selectedLanguage, setSelectedLanguage] = useState("JAVASCRIPT");
+  const [editorReady, setEditorReady] = useState(false);
+  const [hasRun, setHasRun] = useState(false);
+  const [showVerdict, setShowVerdict] = useState(false);
 
-  useEffect(() => { getProblemById(id); }, [id]);
-  useEffect(() => { if (playlists.length === 0) getAllPlaylists(); }, []);
-  useEffect(() => { if (id) { getSubmissionCountForProblem(id); getSuccessRateForProblem(id); } }, [id]);
   useEffect(() => {
-    if (problem && selectedLanguage) {
-      setCode(problem.codeSnippets?.[selectedLanguage] || "");
-      setTestCases(problem.testcases?.map(tc => ({ input: tc.input, output: tc.output })) || []);
+    getProblemById(id);
+    getAllPlaylists();
+    getSubmissionCountForProblem(id);
+    getSuccessRateForProblem(id);
+  }, [id]);
+
+  useEffect(() => {
+    if (problem) {
+      setCode(problem.codeSnippets[selectedLanguage] || "");
+      setEditorReady(false);
     }
   }, [problem, selectedLanguage]);
-  useEffect(() => { if (activeTab === "submissions" && id) getSubmissionForProblem(id); }, [activeTab, id]);
+
+  useEffect(() => {
+    if (activeTab === "submissions") {
+      getSubmissionForProblem(id);
+    }
+  }, [activeTab]);
 
   const handleLanguageChange = (e) => {
-    const lang = e.target.value;
-    setSelectedLanguage(lang);
-    setCode(problem?.codeSnippets?.[lang] || "");
+    setSelectedLanguage(e.target.value);
   };
 
-  const handleRunCode = (e) => {
-    e.preventDefault();
-    try {
-      const language_id = getLanguageId(selectedLanguage);
-      const stdin = problem.testcases.map(tc => tc.input);
-      const expected_outputs = problem.testcases.map(tc => tc.output);
-      executeCode(code, language_id, stdin, expected_outputs, id);
-    } catch (error) {
-      console.error("Error executing code", error);
+  const handleRunCode = async () => {
+    setHasRun(true);
+    setShowVerdict(false); // 💥 Hide verdict while running
+
+    const stdin = problem.testcases.map((tc) => tc.input);
+    const expected = problem.testcases.map((tc) => tc.output);
+
+    await executeCode(code, getLanguageId(selectedLanguage), stdin, expected, id);
+
+    setShowVerdict(true); // 💥 Show verdict only after execution finishes
+  };
+
+  const renderExamples = () => {
+    let examplesArray = [];
+    if (Array.isArray(problem.examples)) {
+      examplesArray = problem.examples;
+    } else if (typeof problem.examples === "object") {
+      examplesArray = Object.entries(problem.examples).map(([key, val]) => ({
+        input: val.input,
+        output: val.output,
+        explanation: val.explanation,
+      }));
     }
+    if (!examplesArray.length) return null;
+
+    return (
+      <table className="w-full text-xs md:text-sm border border-purple-200 rounded mb-4">
+        <thead className="bg-purple-50 text-purple-700">
+          <tr>
+            <th className="p-2 text-left">Input</th>
+            <th className="p-2 text-left">Output</th>
+            <th className="p-2 text-left">Explanation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {examplesArray.map((ex, idx) => (
+            <tr key={idx} className="even:bg-white odd:bg-purple-50">
+              <td className="p-2 font-mono whitespace-pre-wrap">{ex.input}</td>
+              <td className="p-2 font-mono whitespace-pre-wrap">{ex.output}</td>
+              <td className="p-2">{ex.explanation || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
   };
 
-  const renderTabButton = (key, label, Icon) => (
-    <button
-      key={key}
-      className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all text-sm font-medium
-        ${activeTab === key
-          ? "bg-white/10 text-white shadow"
-          : "text-white/60 hover:text-white hover:bg-white/5"}`}
-      onClick={() => setActiveTab(key)}
-    >
-      <Icon className="w-4 h-4" />
-      {label}
-    </button>
-  );
+  const renderVerdict = () => {
+    if (!showVerdict || !submission) return null;
+
+    return (
+      <div
+        className={`p-3 text-sm rounded overflow-y-auto ${
+          submission.status === "Accepted"
+            ? "bg-green-100 text-green-700"
+            : "bg-yellow-100 text-yellow-700"
+        }`}
+      >
+        {submission.status === "Accepted" ? (
+          <>
+            <p className="text-lg font-bold">Accepted ✅</p>
+            <p className="mt-2 font-semibold">Congratulations 🎉 Your solution passed all test cases!</p>
+          </>
+        ) : (
+          <>
+            {submission.testCases.some((tc) => tc.compileOutput || tc.stderr) ? (
+              <div>
+                <p className="font-bold">Error ❌</p>
+                <pre className="whitespace-pre-wrap">
+                  {submission.testCases.find((tc) => tc.compileOutput || tc.stderr)?.compileOutput ||
+                    submission.testCases.find((tc) => tc.compileOutput || tc.stderr)?.stderr}
+                </pre>
+              </div>
+            ) : (
+              <>
+                {(() => {
+                  const firstFail = submission.testCases.find((tc) => !tc.passed);
+                  if (!firstFail) return null;
+                  return (
+                    <>
+                      <p className="font-bold">Failed ❌</p>
+                      <div>
+                        <p><strong>Testcase {firstFail.testCase}</strong></p>
+                        <strong>Input:{" "}</strong>
+                        <pre className="inline">{problem.testcases[firstFail.testCase - 1].input}</pre>
+                      </div>
+                      <div>
+                        <strong>Expected:</strong>{" "}
+                        <pre className="inline">{firstFail.expected}</pre>
+                      </div>
+                      <div>
+                        <strong>Your Output:</strong>{" "}
+                        <pre className="inline">{firstFail.stdout}</pre>
+                      </div>
+                    </>
+                  );
+                })()}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderTabContent = () => {
     if (!problem) return null;
     return (
-      <motion.div variants={fadeIn} initial="hidden" animate="visible">
-        {activeTab === "description" && (
-          <div className="prose prose-invert max-w-none text-white">
-            <p className="text-lg mb-6">{problem.description}</p>
-            {problem.examples && (
-              <>
-                <h3 className="text-xl font-bold mb-4">Examples:</h3>
-                {Object.entries(problem.examples).map(([lang, example]) => (
-                  <div key={lang} className="bg-[#1e293b] p-4 rounded-lg mb-4 border border-white/10">
-                    <p><span className="text-indigo-400 font-semibold">Input:</span> {example.input}</p>
-                    <p><span className="text-indigo-400 font-semibold">Output:</span> {example.output}</p>
-                    {example.explanation && (
-                      <p><span className="text-emerald-400 font-semibold">Explanation:</span> {example.explanation}</p>
-                    )}
-                  </div>
-                ))}
-              </>
-            )}
-            {problem.constraints && (
-              <div className="mt-6">
-                <h3 className="text-xl font-bold mb-2">Constraints:</h3>
-                <div className="bg-[#1e293b] p-4 rounded-lg border border-white/10 text-sm">
-                  {problem.constraints}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "submissions" && (
-          <SubmissionsList submissions={submissions} isLoading={isSubmissionsLoading} />
-        )}
-
-        {activeTab === "hints" && (
-          <div className="p-4 text-white">
-            {problem.hints ? (
-              <div className="bg-[#1e293b] p-4 rounded-lg border border-white/10 text-sm">{problem.hints}</div>
-            ) : (
-              <div className="text-center text-white/60">No hints available</div>
-            )}
-          </div>
-        )}
-      </motion.div>
+      <>
+        <div className="space-y-4 text-gray-800">
+          <h2 className="text-base md:text-lg font-bold">{problem.question}</h2>
+          <p className="text-sm md:text-base">{problem.description}</p>
+          {renderExamples()}
+          {problem.constraints && (
+            <div className="bg-purple-50 border border-purple-200 p-3 rounded text-xs md:text-sm">
+              <strong>Constraints:</strong>
+              <p>{problem.constraints}</p>
+            </div>
+          )}
+          {/* 💥 Verdict moved below constraints */}
+          {renderVerdict()}
+        </div>
+      </>
     );
   };
 
   if (isProblemLoading || !problem) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0f172a] text-white">
-        <div className="p-8 text-center">
-          <div className="animate-spin h-10 w-10 rounded-full border-4 border-t-purple-400 border-white/10 mx-auto" />
-          <p className="mt-4 text-white/60">Loading problem...</p>
-        </div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-tr from-[#fdfbff] to-[#e0f7ea]">
+        <div className="animate-pulse text-purple-600">Loading...</div>
       </div>
     );
   }
 
   return (
-    <motion.div className="min-h-screen bg-gradient-to-tr from-[#0f172a] to-[#1e293b] text-white px-4 py-8" initial="hidden" animate="visible" variants={fadeIn}>
-      {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <Link to="/" className="flex items-center gap-2 text-purple-400 mb-2">
-            <Home className="w-5 h-5" />
-            <ChevronRight className="w-4 h-4" />
+    <motion.div
+      className="h-screen w-screen flex font-inter overflow-hidden p-6 pb-3"
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+    >
+      {/* Left Column */}
+      <div className="w-1/2 bg-white p-6 overflow-y-auto flex flex-col space-y-6 border-r border-purple-100">
+        <div className="flex justify-between items-center flex-wrap gap-3">
+          <Link to="/" className="flex items-center gap-1 text-purple-700 text-sm">
+            <Home /> Back
           </Link>
-          <h1 className="text-2xl font-bold">{problem.title}</h1>
-          <div className="flex items-center gap-4 text-sm mt-2 text-white/70">
-            <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {new Date(problem.createdAt).toLocaleDateString()}</span>
-            <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {submissionCount} Submissions</span>
-            <span className="flex items-center gap-1"><ThumbsUp className="w-4 h-4" /> {successRate}% Success</span>
+          <h1 className="text-lg md:text-xl font-extrabold text-gray-800">
+            {problem.title}
+          </h1>
+          <div className="flex gap-3 text-gray-600 text-xs md:text-sm">
+            <Clock /> {new Date(problem.createdAt).toLocaleDateString()}
+            <Users /> {submissionCount}
+            <ThumbsUp /> {successRate}%
           </div>
-        </div>
-        <div className="flex gap-3 items-center">
-          <button onClick={() => setIsBookmarked(!isBookmarked)} className={`rounded-full p-2 hover:bg-white/10 transition ${isBookmarked ? "text-purple-400" : "text-white"}`}>
-            <Bookmark className="w-5 h-5" />
-          </button>
-          <button className="rounded-full p-2 hover:bg-white/10 transition">
-            <Share2 className="w-5 h-5" />
-          </button>
-          <select
-            className="bg-[#0f172a] border border-white/20 text-white text-sm px-3 py-2 rounded-lg outline-none"
-            value={selectedLanguage}
-            onChange={handleLanguageChange}
-          >
-            {problem.codeSnippets && Object.keys(problem.codeSnippets).map((lang) => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#1e293b] p-4 rounded-2xl shadow-xl border border-white/10">
-          <div className="flex gap-4 mb-4">
-            {renderTabButton("description", "Description", FileText)}
-            {renderTabButton("submissions", "Submissions", Code2)}
-            {renderTabButton("hints", "Hints", Lightbulb)}
-          </div>
-          {renderTabContent()}
         </div>
 
-        <div className="bg-[#1e293b] rounded-2xl shadow-xl border border-white/10 overflow-hidden flex flex-col">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10">
-            <Terminal className="w-4 h-4" />
-            <span className="text-white">Code Editor</span>
-          </div>
-          <div className="h-[600px] w-full">
-            <Editor
-              height="100%"
-              language={selectedLanguage.toLowerCase()}
-              theme="vs-dark"
-              value={code}
-              onChange={(value) => setCode(value || "")}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 16,
-                lineNumbers: "on",
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-              }}
-            />
-          </div>
-          <div className="px-4 py-3 border-t border-white/10 bg-[#0f172a] flex justify-between items-center">
+        <div className="flex gap-3">
+          {["description", "submissions", "hints"].map((tab) => (
             <button
-              className={`px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition ${isExecuting ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={handleRunCode}
-              disabled={isExecuting}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-1 rounded text-xs md:text-sm ${
+                activeTab === tab
+                  ? "bg-purple-200 text-purple-800"
+                  : "text-gray-600 hover:bg-purple-100"
+              }`}
             >
-              {isExecuting ? "Running..." : "Run Code"}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
-            <button className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
-              Submit Solution
-            </button>
-          </div>
+          ))}
         </div>
+
+        {activeTab === "description" && renderTabContent()}
+        {activeTab === "submissions" && (
+          <SubmissionsList submissions={submissions} isLoading={isSubmissionsLoading} />
+        )}
+        {activeTab === "hints" && (
+          <div className="bg-purple-50 border border-purple-200 p-3 rounded text-gray-800 text-sm">
+            {problem.hints || "No hints available."}
+          </div>
+        )}
       </div>
 
-      {/* Test case table */}
-      <motion.div className="bg-[#1e293b] rounded-2xl border border-white/10 shadow-xl mt-6 p-6" variants={fadeIn} initial="hidden" animate="visible">
-        {submission ? (
-          <Submission submission={submission} />
-        ) : (
-          <>
-            <h3 className="text-xl font-bold mb-4">Test Cases</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-separate border-spacing-y-2">
-                <thead>
-                  <tr className="text-white/60 text-left">
-                    <th className="p-2">Input</th>
-                    <th className="p-2">Expected Output</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {testcases.map((tc, i) => {
-                    const blurClass = !submission ? "blurred" : "";
-                    return (
-
-                      <tr key={i} className="bg-[#0f172a] hover:bg-white/5 transition rounded-lg">
-                        <td className={`p-2 font-mono text-white ${blurClass}`}>
-                          {tc.input}
-                        </td>
-                        <td className={`p-2 font-mono text-white ${blurClass}`}>
-                          {tc.output}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </motion.div>
+      {/* Right Column */}
+      <div className="w-1/2 flex flex-col bg-white border border-purple-100">
+        <div className="flex justify-between items-center px-4 py-3 bg-purple-50 border-b border-purple-200">
+          <div className="flex items-center gap-2 text-purple-700 text-sm">
+            <Terminal /> Code Editor
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedLanguage}
+              onChange={handleLanguageChange}
+              className="p-1 border border-purple-200 rounded text-xs md:text-sm bg-white"
+            >
+              {Object.keys(problem.codeSnippets).map((lang) => (
+                <option key={lang} value={lang}>
+                  {lang}
+                </option>
+              ))}
+            </select>
+            <Bookmark className="text-purple-600 cursor-pointer" size={18} />
+            <Share2 className="text-purple-600 cursor-pointer" size={18} />
+          </div>
+        </div>
+        <div className="flex-1 relative">
+          {!editorReady && (
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-white animate-pulse z-10" />
+          )}
+          <Editor
+            height="500px"
+            theme="vs-light"
+            language={selectedLanguage.toLowerCase()}
+            value={code}
+            onMount={() => setEditorReady(true)}
+            onChange={(v) => setCode(v || "")}
+            options={{
+              fontSize: 14,
+            }}
+          />
+        </div>
+        <div className="flex flex-col px-4 py-3 bg-purple-50 border-t border-purple-200">
+          <button
+            onClick={handleRunCode}
+            disabled={isExecuting}
+            className="self-end px-5 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-xs md:text-sm mb-4"
+          >
+            {isExecuting ? "Running..." : "Run"}
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 };

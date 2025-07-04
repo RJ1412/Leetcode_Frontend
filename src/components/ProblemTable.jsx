@@ -90,20 +90,23 @@ const ProblemsTable = ({ problems }) => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto animate-fade-in-up">
-      <div className="bg-[#1e293b]/60 backdrop-blur-md shadow-2xl rounded-2xl p-6 border border-white/10 text-white">
+    <div className="relative w-full max-w-6xl mx-auto animate-fade-in-up">
+    <div className="absolute top-0 left-0 w-60 h-60 bg-pink-200 opacity-40 blur-3xl rounded-full z-0 animate-pulse" />
+      <div className="absolute bottom-10 right-0 w-72 h-72 bg-blue-200 opacity-40 blur-3xl rounded-full z-0 animate-pulse" />
+      <div className="absolute top-20 right-1/3 w-64 h-64 bg-violet-200 opacity-30 blur-2xl rounded-full z-0 animate-pulse" />
 
+      <div className="relative z-10 bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl p-6 border border-pink-100 text-gray-800">
         {/* Header and Playlist Controls */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h2 className="text-3xl font-bold tracking-tight">🔥 Problems</h2>
           <div className="flex items-center gap-2">
             <div className="dropdown dropdown-hover">
-              <label tabIndex={0} className="btn btn-sm bg-[#0f172a] text-white border border-white/20 hover:bg-[#1e293b]">
+              <label tabIndex={0} className="btn btn-sm bg-white text-purple-700 border border-purple-300 hover:bg-purple-100">
                 <ChevronDown className="w-4 h-4 mr-1" />
                 Playlists
               </label>
 
-              <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-[#0f172a] border border-white/10 rounded-box w-52 text-sm">
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-white border border-purple-200 rounded-box w-52 text-sm text-purple-700">
                 {playlists.length === 0 ? (
                   <li><span>No playlists</span></li>
                 ) : (
@@ -123,8 +126,8 @@ const ProblemsTable = ({ problems }) => {
                 )}
               </ul>
             </div>
-            <button onClick={() => setIsCreateModalOpen(true)} className="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg shadow">
-              
+            
+            <button onClick={() => setIsCreateModalOpen(true)} className="btn btn-sm bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:brightness-110 text-white px-3 py-1.5 rounded-lg shadow-md"> 
               <Plus className="w-4 h-4 mr-1" />
               Create Playlist
             </button>
@@ -154,12 +157,12 @@ const ProblemsTable = ({ problems }) => {
           <input
             type="text"
             placeholder="Search by title"
-            className="input input-bordered w-full md:w-1/3 bg-[#1e293b] text-white border-white/10"
+            className="input input-bordered w-full md:w-1/3 bg-white border border-purple-200 text-purple-700 placeholder-purple-400"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
-            className="select select-bordered bg-[#1e293b] text-white border-white/10"
+            className="select select-bordered bg-white border border-purple-200 text-purple-700"
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value)}
           >
@@ -169,7 +172,7 @@ const ProblemsTable = ({ problems }) => {
             ))}
           </select>
           <select
-            className="select select-bordered bg-[#1e293b] text-white border-white/10"
+            className="select select-bordered bg-white border border-purple-200 text-purple-700"
             value={selectedTag}
             onChange={(e) => setSelectedTag(e.target.value)}
           >
@@ -181,9 +184,9 @@ const ProblemsTable = ({ problems }) => {
         </div>
 
         {/* Problems Table */}
-        <div className="overflow-x-auto rounded-xl shadow-lg">
-          <table className="table table-lg bg-[#0f172a]/50 text-white border border-white/10">
-            <thead className="bg-[#1e293b] text-white">
+            <div className="overflow-x-auto rounded-xl shadow-lg">
+          <table className="table table-lg bg-white/70 text-purple-900 border border-pink-200">
+            <thead className="bg-pink-100">
               <tr>
                 <th>Solved</th>
                 <th>Title</th>
@@ -200,7 +203,7 @@ const ProblemsTable = ({ problems }) => {
                   return (
                     <tr
                       key={problem.id}
-                      className={`transition duration-150 ease-in-out hover:bg-[#172334]/80 ${isSolved ? "bg-gradient-to-r from-green-900/30 to-green-800/20" : "bg-[#0f172a]/50"
+                      className={`transition duration-150 ease-in-out hover:bg-pink-100/60 ${isSolved ? "bg-gradient-to-r from-pink-100 to-purple-100" : "bg-white/50"
                         }`}
                     >
                       <td>
@@ -282,7 +285,7 @@ const ProblemsTable = ({ problems }) => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="text-center py-6 text-white/60">
+                  <td colSpan={5} className="text-center py-6 text-purple-600">
                     No problems found.
                   </td>
                 </tr>
