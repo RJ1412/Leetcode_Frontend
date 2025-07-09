@@ -55,7 +55,6 @@ const ProblemPage = () => {
   useEffect(() => {
     if (problem) {
       setCode(problem.codeSnippets[selectedLanguage] || "");
-      setEditorReady(false);
     }
   }, [problem, selectedLanguage]);
 
@@ -280,6 +279,7 @@ const ProblemPage = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-white animate-pulse z-10" />
           )}
           <Editor
+            key={selectedLanguage}
             height="500px"
             theme="vs-light"
             language={selectedLanguage.toLowerCase()}
