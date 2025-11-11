@@ -31,18 +31,26 @@ export const usePlaylistStore = create((set, get) => ({
     }
   },
 
+    // Fetch all playlists for current user
   getAllPlaylists: async () => {
+    if (get().isLoading) return;
     try {
-      set({ isLoading: true });
-      const response = await axiosInstance.get("/playlist");
-      set({ playlists: response.data.playLists });
-    } catch (error) {
-      console.error("Error fetching playlists:", error);
-      toast.error("Failed to fetch playlists");
+      set({ isLoading: true, error: null });
+      const response = await axiosInstance.get("/playlist/mine"); // <- changed
+      const playLists = response.data?.playLists ?? [];
+      set({ playlists: Array.isArray(playLists) ? playLists : [] });
+      return playLists;
+    } catch (err) {
+      console.error("Error fetching playlists:", err);
+      const message = err.response?.data?.error || "Failed to fetch playlists";
+      set({ error: message });
+      toast.error(message);
+      return [];
     } finally {
       set({ isLoading: false });
     }
   },
+
 
   getPlaylistDetails: async (playlistId) => {
     try {
