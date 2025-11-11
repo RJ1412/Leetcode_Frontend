@@ -1,172 +1,202 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePlaylistStore } from "../store/usePlaylistStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, Loader, Trash2, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
+
 const MyPlaylists = () => {
   const {
-    playlists,
+    playlists = [],
     getAllPlaylists,
     removeProblemFromPlaylist,
     deletePlaylist,
     isLoading,
   } = usePlaylistStore();
-    const { user } = useAuthStore();  
+
+  // if you still want to use user for anything, read it (we assume logged in)
+  const user = useAuthStore((s) => s.user);
+
   const [openPlaylistId, setOpenPlaylistId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     getAllPlaylists();
-  }, [getAllPlaylists]);
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const toggleDropdown = (id) => {
-    setOpenPlaylistId(openPlaylistId === id ? null : id);
-  };
+  const toggleDropdown = (id) => setOpenPlaylistId((prev) => (prev === id ? null : id));
 
-  const handleSearch = (problems) =>
-    problems.filter(({ problem }) =>
-      problem.title.toLowerCase().includes(searchTerm.toLowerCase())
+  // defensive search: playlist.problems might be undefined
+  const searchInProblems = (problems = []) =>
+    (problems || []).filter(({ problem } = {}) =>
+      String(problem?.title || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-      const myPlaylists = playlists.filter(
-    (playlist) => playlist.user?.id === user?.id
-  );
-  const filteredPlaylists = myPlaylists.filter((playlist) =>
-    searchTerm.trim() === ""
-      ? true
-      : playlist.problems.some(({ problem }) =>
-          problem.title.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-  );
+  // filtered playlists based on search term (server returns only user's playlists)
+  const filteredPlaylists = useMemo(() => {
+    if (!Array.isArray(playlists)) return [];
+    if (!searchTerm.trim()) return playlists;
+    const q = searchTerm.toLowerCase();
+    return playlists.filter((pl) =>
+      (pl.problems || []).some(({ problem } = {}) =>
+        String(problem?.title || "").toLowerCase().includes(q)
+      )
+    );
+  }, [playlists, searchTerm]);
+
+  const handleDeletePlaylist = async (e, playlistId) => {
+    e.stopPropagation();
+    try {
+      await deletePlaylist(playlistId);
+      if (openPlaylistId === playlistId) setOpenPlaylistId(null);
+    } catch (err) {
+      // store already toasts; optionally handle here
+      console.error("delete failed", err);
+    }
+  };
+
+  const handleRemoveProblem = async (e, playlistId, problemId) => {
+    e.stopPropagation();
+    try {
+      await removeProblemFromPlaylist(playlistId, [problemId]);
+      // optionally close open list or refresh UI; store refreshes current playlist/list
+    } catch (err) {
+      console.error("remove failed", err);
+    }
+  };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-tr from-[#0f172a] to-[#1e293b] text-white px-6 py-20 flex flex-col items-center overflow-hidden">
-      {/* Glowing Backgrounds */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-purple-600 opacity-20 blur-3xl rounded-full animate-pulse z-0" />
-      <div className="absolute bottom-0 right-0 w-72 h-72 bg-indigo-500 opacity-20 blur-3xl rounded-full animate-pulse z-0" />
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-[#FFF7FB] via-[#FFFDF6] to-[#F7FBFF] text-slate-800">
+      {/* Top container */}
+      <div className="max-w-6xl mx-auto px-6 pt-16">
+        <div className="flex items-center gap-4 mb-8">
+          <button
+            onClick={() => navigate("/")}
+            className="p-2 rounded-md bg-white/60 backdrop-blur-sm shadow-sm hover:scale-105 transition"
+            title="Home"
+          >
+            <Home className="w-5 h-5 text-purple-600" />
+          </button>
 
-      {/* Home Icon */}
-      <button
-        onClick={() => navigate("/")}
-        className="absolute top-6 left-6 z-20 text-white hover:text-purple-400 transition"
-      >
-        <Home className="w-6 h-6" />
-      </button>
-
-      {/* Title */}
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-4xl font-extrabold text-center z-10"
-      >
-        Your <span className="text-purple-400">Playlists</span>
-      </motion.h1>
-
-      {/* Search Bar */}
-      <div className="mt-6 z-10 w-full max-w-xl">
-        <input
-          type="text"
-          placeholder="Search problems..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-gray-400"
-        />
-      </div>
-
-      {/* Playlists */}
-      {isLoading ? (
-        <div className="flex items-center justify-center mt-10">
-          <Loader className="w-6 h-6 animate-spin text-white" />
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+            Your{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-violet-500">
+              Playlists
+            </span>
+          </h1>
         </div>
-      ) : filteredPlaylists.length === 0 ? (
-        <p className="mt-10 text-center text-gray-400">No matching playlists found.</p>
-      ) : (
-        <div className="mt-10 w-full max-w-5xl z-10 space-y-6">
-          {filteredPlaylists.map((playlist) => (
-            <motion.div
-              key={playlist.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-gray-900 border border-gray-700 rounded-lg"
-            >
-              <div
-                onClick={() => toggleDropdown(playlist.id)}
-                className="cursor-pointer px-6 py-5 flex justify-between items-center hover:bg-gray-800 transition duration-300"
+
+        <div className="w-full max-w-2xl">
+          <input
+            type="search"
+            placeholder="Search problems..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-200"
+          />
+        </div>
+
+        {/* Loading */}
+        {isLoading ? (
+          <div className="mt-12 flex items-center justify-center">
+            <Loader className="w-8 h-8 animate-spin text-pink-400" />
+          </div>
+        ) : filteredPlaylists.length === 0 ? (
+          <div className="mt-16 text-center text-slate-500">
+            <p className="text-lg">No matching playlists found.</p>
+            <p className="mt-2 text-sm">Create a playlist from any problem to see it here.</p>
+          </div>
+        ) : (
+          <div className="mt-10 grid gap-6">
+            {filteredPlaylists.map((pl) => (
+              <motion.div
+                key={pl.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28 }}
+                className="rounded-2xl bg-gradient-to-r from-white via-[#fffaf0] to-[#fbfcff] border border-slate-100 shadow-md overflow-hidden"
               >
-                <div>
-                  <h2 className="text-xl font-semibold">{playlist.name}</h2>
-                  <p className="text-sm text-gray-400">{playlist.description}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deletePlaylist(playlist.id);
-                    }}
-                    className="text-red-400 hover:text-red-300"
-                    title="Delete Playlist"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                  {openPlaylistId === playlist.id ? (
-                    <ChevronUp className="w-5 h-5 text-white" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-white" />
-                  )}
-                </div>
-              </div>
+                <div
+                  onClick={() => toggleDropdown(pl.id)}
+                  className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50 transition"
+                >
+                  <div>
+                    <h3 className="text-lg md:text-xl font-semibold text-slate-800">{pl.name}</h3>
+                    <p className="text-sm text-slate-500 mt-1">{pl.description || "No description"}</p>
+                    <div className="mt-2 text-xs text-slate-400">
+                      {Array.isArray(pl.problems) ? `${pl.problems.length} problem(s)` : "0 problems"}
+                    </div>
+                  </div>
 
-              <AnimatePresence>
-                {openPlaylistId === playlist.id && (
-                  <motion.div
-                    key="dropdown"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="px-6 pb-4"
-                  >
-                    {handleSearch(playlist.problems).length === 0 ? (
-                      <p className="text-gray-500 text-sm italic">
-                        No matching problems.
-                      </p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => handleDeletePlaylist(e, pl.id)}
+                      className="p-2 rounded-lg bg-pink-50 hover:bg-pink-100 transition"
+                      title="Delete playlist"
+                    >
+                      <Trash2 className="w-4 h-4 text-pink-600" />
+                    </button>
+
+                    {openPlaylistId === pl.id ? (
+                      <ChevronUp className="w-6 h-6 text-slate-600" />
                     ) : (
-                      <ul className="space-y-2 mt-4">
-                        {handleSearch(playlist.problems).map(({ problem }) => (
-                          <li
-                            key={problem.id}
-                            className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-md w-full"
-                          >
-                            <Link
-                              to={`/problem/${problem.id}`}
-                              className="text-purple-300 hover:text-purple-200 transition w-full"
-                            >
-                              {problem.title}
-                            </Link>
-                            <button
-                              onClick={() =>
-                                removeProblemFromPlaylist(playlist.id, [problem.id])
-                              }
-                              className="text-red-400 hover:text-red-300 ml-4"
-                              title="Remove from Playlist"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
+                      <ChevronDown className="w-6 h-6 text-slate-600" />
                     )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
-        </div>
-      )}
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {openPlaylistId === pl.id && (
+                    <motion.div
+                      key={`dropdown-${pl.id}`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      className="px-6 pb-4 bg-white/40"
+                    >
+                      {/* problems list */}
+                      {(!pl.problems || pl.problems.length === 0) ? (
+                        <div className="p-4 text-sm text-slate-500 italic">No problems in this playlist.</div>
+                      ) : (
+                        <ul className="space-y-3 mt-3">
+                          { (pl.problems || []).map(({ problem } = {}) => (
+                            <li
+                              key={problem?.id ?? Math.random()}
+                              className="flex items-center justify-between gap-4 bg-[#FFF8FB] border border-slate-100 rounded-lg px-4 py-3"
+                            >
+                              <Link
+                                to={`/problem/${problem?.id}`}
+                                className="block text-slate-800 font-medium hover:text-pink-600"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {problem?.title || "Untitled Problem"}
+                              </Link>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-400">{problem?.difficulty ?? ""}</span>
+                                <button
+                                  onClick={(e) => handleRemoveProblem(e, pl.id, problem?.id)}
+                                  className="p-2 rounded-md bg-rose-50 hover:bg-rose-100 transition"
+                                  title="Remove from playlist"
+                                >
+                                  <Trash2 className="w-4 h-4 text-rose-600" />
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
