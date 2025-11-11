@@ -66,6 +66,7 @@ const ProblemPage = () => {
 
   const handleLanguageChange = (e) => {
     setSelectedLanguage(e.target.value);
+
   };
 
   const handleRunCode = async () => {
@@ -278,18 +279,19 @@ const ProblemPage = () => {
           {!editorReady && (
             <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-white animate-pulse z-10" />
           )}
-          <Editor
-            key={selectedLanguage}
-            height="500px"
-            theme="vs-light"
-            language={selectedLanguage.toLowerCase()}
-            value={code}
-            onMount={() => setEditorReady(true)}
-            onChange={(v) => setCode(v || "")}
-            options={{
-              fontSize: 14,
-            }}
-          />
+         <Editor
+  key={selectedLanguage} // 💡 Force remount on language change
+  height="500px"
+  theme="vs-light"
+  language={selectedLanguage.toLowerCase()}
+  value={code}
+  onMount={() => setEditorReady(true)}
+  onChange={(v) => setCode(v || "")}
+  options={{
+    fontSize: 14,
+  }}
+/>
+
         </div>
         <div className="flex flex-col px-4 py-3 bg-purple-50 border-t border-purple-200">
           <button
