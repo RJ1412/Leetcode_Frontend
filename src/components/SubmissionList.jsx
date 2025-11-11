@@ -8,31 +8,55 @@ import {
 import { motion } from "framer-motion";
 
 const SubmissionsList = ({ submissions, isLoading }) => {
+  // Robust parser: accepts strings, arrays, null/undefined, objects.
   const safeParse = (data) => {
-    try {
-      return JSON.parse(data);
-    } catch (error) {
-      console.error("Error parsing data:", error);
-      return [];
+    if (data == null) return []; // covers null / undefined
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        // ensure we return an array (or convert single value to array)
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed == null) return [];
+        // if it's a single value, wrap it
+        return [parsed];
+      } catch (error) {
+        // If it's not valid JSON, try to treat it as a comma-separated list or a single value
+        // Example: "12 KB, 13 KB" -> ["12 KB", "13 KB"]
+        if (data.includes(",")) {
+          return data.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+        return [data];
+      }
     }
+    // If it's some other type (number/object), convert to array
+    return [data];
+  };
+
+  const parseValueFromString = (val) => {
+    // convert whatever we got to a string, split by space, parse float
+    const num = parseFloat(String(val).split(/\s+/)[0]);
+    return Number.isFinite(num) ? num : NaN;
   };
 
   const calculateAverageMemory = (memoryData) => {
-    const memoryArray = safeParse(memoryData).map((m) =>
-      parseFloat(m.split(" ")[0])
-    );
-    if (memoryArray.length === 0) return 0;
-    return (
-      memoryArray.reduce((acc, curr) => acc + curr, 0) / memoryArray.length
-    );
+    const parsed = safeParse(memoryData);
+    const nums = parsed
+      .map((m) => parseValueFromString(m))
+      .filter((n) => !Number.isNaN(n));
+    if (nums.length === 0) return 0;
+    const sum = nums.reduce((acc, curr) => acc + curr, 0);
+    return sum / nums.length;
   };
 
   const calculateAverageTime = (timeData) => {
-    const timeArray = safeParse(timeData).map((t) =>
-      parseFloat(t.split(" ")[0])
-    );
-    if (timeArray.length === 0) return 0;
-    return timeArray.reduce((acc, curr) => acc + curr, 0) / timeArray.length;
+    const parsed = safeParse(timeData);
+    const nums = parsed
+      .map((t) => parseValueFromString(t))
+      .filter((n) => !Number.isNaN(n));
+    if (nums.length === 0) return 0;
+    const sum = nums.reduce((acc, curr) => acc + curr, 0);
+    return sum / nums.length;
   };
 
   if (isLoading) {
@@ -44,11 +68,7 @@ const SubmissionsList = ({ submissions, isLoading }) => {
   }
 
   if (!submissions?.length) {
-    return (
-      <div className="text-center p-8 text-zinc-400">
-        No submissions yet
-      </div>
-    );
+    return <div className="text-center p-8 text-zinc-400">No submissions yet</div>;
   }
 
   return (
@@ -96,9 +116,7 @@ const SubmissionsList = ({ submissions, isLoading }) => {
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>
-                    {new Date(submission.createdAt).toLocaleDateString()}
-                  </span>
+                  <span>{new Date(submission.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
